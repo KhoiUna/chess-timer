@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Chess Timer</title>
+    <!-- Use Tailwind CSS for a minimalist and responsive design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom font for a clean, modern look */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none;  /* Prevent selection on mobile */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Define a custom class for the active player's timer to add a subtle grow effect */
+        .active-timer {
+            transform: scale(1.02);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Remove focus outline for a cleaner look on interactive elements */
+        button:focus,
+        select:focus {
+            outline: none;
+        }
+
+        /* Style the modal content */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border-radius: 1rem;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col min-h-screen">
+    <div class="flex-1 flex flex-col justify-center items-center p-4 md:p-8">
+
+        <!-- Black Player Timer Section -->
+        <div id="black-timer" class="flex-1 w-full flex items-center justify-center p-4 md:p-8 rounded-xl bg-gray-900 text-white transition-all duration-300 transform cursor-pointer border-4 border-gray-700 hover:border-white">
+            <span class="text-7xl md:text-9xl font-bold tracking-tight">10:00</span>
+        </div>
+
+        <!-- Timer Controls Section -->
+        <div class="flex-none flex justify-center items-center space-x-4 my-8">
+            <!-- Settings Button -->
+            <button id="settings-btn" class="p-3 rounded-full bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.223 2.892-1.066z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+            
+            <!-- Play/Pause Button -->
+            <button id="play-pause-btn" class="p-4 rounded-full bg-white text-black hover:bg-gray-200 transition-colors duration-200 shadow-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+            </button>
+            
+            <!-- Reset Button -->
+            <button id="reset-btn" class="p-3 rounded-full bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.418 15v-5h-.582m.582-7a8.995 8.995 0 01-1.35 4.35m-14.07 0A8.995 8.995 0 014 15a9 9 0 019-9c2.811 0 5.349 1.144 7.194 3.013l-1.42 1.42a7 7 0 00-11.233-.707z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- White Player Timer Section -->
+        <div id="white-timer" class="flex-1 w-full flex items-center justify-center p-4 md:p-8 rounded-xl bg-white text-black transition-all duration-300 transform cursor-pointer border-4 border-gray-700 hover:border-black">
+            <span class="text-7xl md:text-9xl font-bold tracking-tight">10:00</span>
+        </div>
+
+    </div>
+
+    <!-- The Modal for Options -->
+    <div id="options-modal" class="modal">
+        <div class="modal-content text-black">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Timer Settings</h2>
+                <button id="close-modal-btn" class="p-1 rounded-full text-gray-500 hover:text-black">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="initial-time" class="block text-gray-700 mb-2">Initial Time (minutes):</label>
+                    <select id="initial-time" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="1">1</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="30">30</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="increment" class="block text-gray-700 mb-2">Increment (seconds):</label>
+                    <select id="increment" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="0">0</option>
+                        <option value="3" selected>3</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                    </select>
+                </div>
+            </div>
+            <p class="mt-4 text-sm text-center text-gray-500">Changes will apply on the next game.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Core Application Logic ---
+
+        // State variables for the timer
+        let initialTimeInSeconds = 10 * 60; // Default to 10 minutes
+        let incrementInSeconds = 3;         // Default to 3 seconds
+        let whiteTimeInSeconds = initialTimeInSeconds;
+        let blackTimeInSeconds = initialTimeInSeconds;
+        let isWhiteTurn = true;
+        let isRunning = false;
+        let timerInterval = null;
+
+        // --- DOM Elements ---
+
+        const whiteTimerDisplay = document.querySelector('#white-timer span');
+        const blackTimerDisplay = document.querySelector('#black-timer span');
+        const whiteTimerBox = document.getElementById('white-timer');
+        const blackTimerBox = document.getElementById('black-timer');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const optionsModal = document.getElementById('options-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const initialTimeSelect = document.getElementById('initial-time');
+        const incrementSelect = document.getElementById('increment');
+
+        // --- Helper Functions ---
+
+        /**
+         * Formats a time in seconds into a MM:SS string.
+         * @param {number} totalSeconds - The total number of seconds.
+         * @returns {string} The formatted time string.
+         */
+        const formatTime = (totalSeconds) => {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        };
+
+        /**
+         * Renders the current time to the display.
+         */
+        const renderTimers = () => {
+            whiteTimerDisplay.textContent = formatTime(whiteTimeInSeconds);
+            blackTimerDisplay.textContent = formatTime(blackTimeInSeconds);
+
+            // Update active player's UI
+            whiteTimerBox.classList.toggle('active-timer', !isWhiteTurn && isRunning);
+            blackTimerBox.classList.toggle('active-timer', isWhiteTurn && isRunning);
+        };
+
+        /**
+         * Switches the active player's turn.
+         */
+        const switchTurn = () => {
+            // Apply increment to the player who just moved
+            if (isWhiteTurn) {
+                whiteTimeInSeconds += incrementInSeconds;
+            } else {
+                blackTimeInSeconds += incrementInSeconds;
+            }
+            
+            // Switch turn state
+            isWhiteTurn = !isWhiteTurn;
+            
+            // Re-render timers with new times and active player
+            renderTimers();
+        };
+
+        /**
+         * Stops the timer interval.
+         */
+        const stopTimer = () => {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            // Reset active player highlights
+            whiteTimerBox.classList.remove('active-timer');
+            blackTimerBox.classList.remove('active-timer');
+            // Update play/pause button icon to 'play'
+            playPauseBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+            `;
+        };
+
+        // --- Event Handlers ---
+
+        /**
+         * Main timer loop. This function is called every second.
+         */
+        const tick = () => {
+            if (isWhiteTurn) {
+                whiteTimeInSeconds--;
+                if (whiteTimeInSeconds <= 0) {
+                    stopTimer();
+                    whiteTimerDisplay.textContent = '00:00';
+                    alertUser('White player\'s time is up!');
+                }
+            } else {
+                blackTimeInSeconds--;
+                if (blackTimeInSeconds <= 0) {
+                    stopTimer();
+                    blackTimerDisplay.textContent = '00:00';
+                    alertUser('Black player\'s time is up!');
+                }
+            }
+            renderTimers();
+        };
+
+        /**
+         * Toggles the timer's running state (start/pause).
+         */
+        const toggleTimer = () => {
+            if (isRunning) {
+                stopTimer();
+            } else {
+                isRunning = true;
+                timerInterval = setInterval(tick, 1000);
+                // Update play/pause button icon to 'pause'
+                playPauseBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                    </svg>
+                `;
+                // Start the timer for the active player (White by default)
+                renderTimers();
+            }
+        };
+
+        /**
+         * Resets the timer to the initial time and stops the countdown.
+         */
+        const resetTimer = () => {
+            stopTimer();
+            whiteTimeInSeconds = initialTimeInSeconds;
+            blackTimeInSeconds = initialTimeInSeconds;
+            isWhiteTurn = true;
+            renderTimers();
+        };
+
+        /**
+         * Function to display a message to the user using a custom modal.
+         * @param {string} message - The message to be displayed.
+         */
+        const alertUser = (message) => {
+            // A simple implementation of a custom message box
+            const alertModal = document.createElement('div');
+            alertModal.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center';
+            alertModal.innerHTML = `
+                <div class="bg-gray-800 p-8 rounded-xl shadow-xl text-white max-w-sm text-center">
+                    <p class="text-xl font-bold mb-4">${message}</p>
+                    <button class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors duration-200">OK</button>
+                </div>
+            `;
+            document.body.appendChild(alertModal);
+            
+            alertModal.querySelector('button').addEventListener('click', () => {
+                document.body.removeChild(alertModal);
+            });
+        };
+
+        // --- Initialization and Event Listeners ---
+
+        // Function to initialize the app
+        const initialize = () => {
+            // Initial render
+            renderTimers();
+
+            // Updated logic: A player must tap their own timer to switch turns.
+            whiteTimerBox.addEventListener('click', () => {
+                if (isRunning && isWhiteTurn) { // It's White's turn and they tap their timer
+                    switchTurn();
+                }
+            });
+            blackTimerBox.addEventListener('click', () => {
+                if (isRunning && !isWhiteTurn) { // It's Black's turn and they tap their timer
+                    switchTurn();
+                }
+            });
+
+            // Button event listeners
+            playPauseBtn.addEventListener('click', toggleTimer);
+            resetBtn.addEventListener('click', resetTimer);
+
+            // Options modal event listeners
+            settingsBtn.addEventListener('click', () => {
+                optionsModal.style.display = 'block';
+            });
+            closeModalBtn.addEventListener('click', () => {
+                optionsModal.style.display = 'none';
+            });
+            window.addEventListener('click', (event) => {
+                if (event.target === optionsModal) {
+                    optionsModal.style.display = 'none';
+                }
+            });
+
+            // Update initial time and increment from select boxes
+            initialTimeSelect.addEventListener('change', (e) => {
+                initialTimeInSeconds = parseInt(e.target.value) * 60;
+                resetTimer(); // Reset to apply the new setting
+            });
+            incrementSelect.addEventListener('change', (e) => {
+                incrementInSeconds = parseInt(e.target.value);
+            });
+        };
+
+        // Run the initialization function when the page loads
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
